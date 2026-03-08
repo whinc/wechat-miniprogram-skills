@@ -1,0 +1,49 @@
+{
+  "eval_id": 3,
+  "eval_name": "upload-script-generation",
+  "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`）。现在需要生成一个可直接落地的 Node.js 上传脚本模板：必须使用 miniprogram-ci；version 和 desc 从命令行传入；appid、privateKeyPath、projectPath、robot 从环境变量读取；支持在上传前按需执行 packNpm；把上传结果落盘到 ci-artifacts/uploads/ 目录；先列出前置条件和安全注意事项，再给完整脚本，并补充 package.json scripts 示例。",
+  "assertions": [
+    {
+      "id": "upload-uses-miniprogram-ci",
+      "text": "脚本使用 require('miniprogram-ci') 导入 miniprogram-ci 库",
+      "type": "contains",
+      "check": "upload.js 中包含 require('miniprogram-ci')"
+    },
+    {
+      "id": "upload-env-vars",
+      "text": "脚本从环境变量读取 MP_APPID、MP_PRIVATE_KEY_PATH、MP_PROJECT_PATH",
+      "type": "contains",
+      "check": "upload.js 中包含 process.env.MP_APPID, process.env.MP_PRIVATE_KEY_PATH, process.env.MP_PROJECT_PATH"
+    },
+    {
+      "id": "upload-cli-args",
+      "text": "脚本支持 --version 和 --desc 命令行参数",
+      "type": "contains",
+      "check": "upload.js 中解析 --version 和 --desc 参数"
+    },
+    {
+      "id": "upload-pack-npm-option",
+      "text": "脚本支持 --pack-npm 选项在上传前执行 npm 构建",
+      "type": "contains",
+      "check": "upload.js 中包含 --pack-npm 或 packNpm 相关逻辑"
+    },
+    {
+      "id": "upload-result-save",
+      "text": "上传结果保存到 ci-artifacts/uploads/ 目录",
+      "type": "contains",
+      "check": "upload.js 中包含 ci-artifacts/uploads 路径"
+    },
+    {
+      "id": "upload-retry-logic",
+      "text": "上传脚本包含超时重试逻辑",
+      "type": "contains",
+      "check": "upload.js 中包含重试相关代码（retry/attempt 等）"
+    },
+    {
+      "id": "upload-security-notes",
+      "text": "输出中包含安全注意事项（密钥管理、gitignore、IP白名单）",
+      "type": "contains",
+      "check": "notes.md 中提到密钥、.gitignore、IP 白名单"
+    }
+  ]
+}

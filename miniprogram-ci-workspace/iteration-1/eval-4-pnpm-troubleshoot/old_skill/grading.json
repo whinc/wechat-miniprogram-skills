@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "run_type": "old_skill",
+  "expectations": [
+    { "text": "识别出 pnpm 严格依赖隔离是 picocolors 报错的根本原因", "passed": true, "evidence": "notes.md 正确分析了 pnpm 严格模式下的依赖隔离问题" },
+    { "text": "建议在 .npmrc 中添加 shamefully-hoist=true", "passed": true, "evidence": "notes.md 方案三提到 shamefully-hoist=true，但标注为'不推荐'，首选 public-hoist-pattern" },
+    { "text": "提醒需要重新生成 pnpm-lock.yaml", "passed": false, "evidence": "notes.md 方案一和三只说 'pnpm install'，没有明确提示需要先删除旧 lockfile 才能生效" },
+    { "text": "生成了完整的上传脚本", "passed": true, "evidence": "upload.js 存在，191 行，包含 ci.upload 调用" },
+    { "text": "脚本或说明中正确引用了 dist/ 作为编译产物目录", "passed": true, "evidence": "upload.js 第 40 行默认 projectPath 为 './dist'" }
+  ]
+}

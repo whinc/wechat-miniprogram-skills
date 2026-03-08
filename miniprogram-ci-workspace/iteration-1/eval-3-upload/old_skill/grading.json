@@ -1,0 +1,13 @@
+{
+  "eval_id": 3,
+  "run_type": "old_skill",
+  "expectations": [
+    { "text": "脚本使用 require('miniprogram-ci') 导入 miniprogram-ci 库", "passed": true, "evidence": "upload.js 第 23 行: const ci = require('miniprogram-ci')" },
+    { "text": "脚本从环境变量读取 MP_APPID、MP_PRIVATE_KEY_PATH、MP_PROJECT_PATH", "passed": true, "evidence": "upload.js 第 32-34 行读取 process.env.MP_APPID 等" },
+    { "text": "脚本支持 --version 和 --desc 命令行参数", "passed": true, "evidence": "upload.js parseArgs() 解析 --version 和 --desc" },
+    { "text": "脚本支持 --pack-npm 选项在上传前执行 npm 构建", "passed": true, "evidence": "upload.js 第 188-202 行包含 packNpm 逻辑" },
+    { "text": "上传结果保存到 ci-artifacts/uploads/ 目录", "passed": true, "evidence": "upload.js 第 36 行: outputDir 指向 ci-artifacts/uploads" },
+    { "text": "上传脚本包含超时重试逻辑", "passed": false, "evidence": "old_skill 的 upload.js 直接调用 ci.upload() (第 207 行)，没有重试逻辑" },
+    { "text": "输出中包含安全注意事项（密钥管理、gitignore、IP白名单）", "passed": true, "evidence": "notes.md 包含安全注意事项，提到密钥、.gitignore、IP白名单" }
+  ]
+}

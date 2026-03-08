@@ -1,0 +1,55 @@
+{
+  "eval_id": 5,
+  "eval_name": "github-actions-pnpm-workflow",
+  "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`），我需要一个完整的 GitHub Actions workflow 来自动化小程序的上传流程。项目使用 pnpm，Taro 框架，编译产物在 dist/ 目录。要求：push 到 main 分支时自动触发；支持手动触发并自定义版本描述；上传成功后自动创建 GitHub Release；需要处理 pnpm 缓存和 miniprogram-ci 的网络超时问题。",
+  "assertions": [
+    {
+      "id": "ga-trigger-push-main",
+      "text": "workflow 在 push 到 main 分支时触发",
+      "type": "contains",
+      "check": "deploy.yml 中包含 on.push.branches: [main]"
+    },
+    {
+      "id": "ga-trigger-workflow-dispatch",
+      "text": "支持 workflow_dispatch 手动触发并接受描述参数",
+      "type": "contains",
+      "check": "deploy.yml 中包含 workflow_dispatch 及 inputs"
+    },
+    {
+      "id": "ga-pnpm-before-node",
+      "text": "pnpm 安装步骤在 setup-node 之前",
+      "type": "contains",
+      "check": "deploy.yml 中 pnpm/action-setup 出现在 actions/setup-node 之前"
+    },
+    {
+      "id": "ga-pnpm-cache",
+      "text": "配置了 pnpm 缓存",
+      "type": "contains",
+      "check": "deploy.yml 中 setup-node 包含 cache: 'pnpm'"
+    },
+    {
+      "id": "ga-github-release",
+      "text": "上传成功后创建 GitHub Release",
+      "type": "contains",
+      "check": "deploy.yml 中包含 gh release create 或 actions/create-release"
+    },
+    {
+      "id": "ga-permissions-write",
+      "text": "声明了 permissions: contents: write",
+      "type": "contains",
+      "check": "deploy.yml 中包含 permissions 和 contents: write"
+    },
+    {
+      "id": "ga-private-key-cleanup",
+      "text": "密钥文件在 always() 条件下清理",
+      "type": "contains",
+      "check": "deploy.yml 中密钥清理步骤带有 if: always()"
+    },
+    {
+      "id": "ga-timeout-handling",
+      "text": "提到了网络超时处理（重试逻辑或相关说明）",
+      "type": "contains",
+      "check": "输出中提到超时重试、retry、timeout 等"
+    }
+  ]
+}

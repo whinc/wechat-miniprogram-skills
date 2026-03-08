@@ -1,0 +1,102 @@
+name: WeChat Mini Program CI
+
+on:
+  push:
+    branches:
+      - main
+  # 支持手动触发并自定义版本描述
+  workflow_dispatch:
+    inputs:
+      desc:
+        description: '版本描述（留空则自动生成）'
+        required: false
+        default: ''
+
+jobs:
+  deploy:
+    name: 构建 → 上传微信后台
+    runs-on: ubuntu-latest
+    # 创建 GitHub Release 必须声明，否则报 HTTP 403
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # pnpm 必须先于 setup-node 安装，否则 cache: 'pnpm' 会报错
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: miniprogram-demo/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: miniprogram-demo
+        # 需要先提交 pnpm-lock.yaml，否则 --frozen-lockfile 会失败
+        run: pnpm install --frozen-lockfile
+
+      - name: Build mini program
+        working-directory: miniprogram-demo
+        run: pnpm build:weapp
+
+      - name: Generate version
+        id: version
+        run: |
+          DATE=$(date +%Y%m%d)
+          COMMIT=$(git rev-parse HEAD | cut -c1-6)
+          VERSION="${DATE}.${COMMIT}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Generated version: ${VERSION}"
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.MP_PRIVATE_KEY }}" > private.key
+          chmod 600 private.key
+
+      - name: Upload to WeChat
+        working-directory: miniprogram-demo
+        env:
+          MP_APPID: ${{ secrets.MP_APPID }}
+          MP_PRIVATE_KEY_PATH: ${{ github.workspace }}/private.key
+          MP_PROJECT_PATH: ./dist
+          MP_ROBOT: 1
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DESC="${{ github.event.inputs.desc }}"
+          if [ -z "$DESC" ]; then DESC="CI 自动发布 ${VERSION}"; fi
+          node scripts/upload.js --version "$VERSION" --desc "$DESC"
+
+      - name: Cleanup private key
+        if: always()
+        run: rm -f private.key
+
+      - name: Create GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          TRIGGER="${{ github.event_name }}"
+          DESC="${{ github.event.inputs.desc }}"
+          if [ -z "$DESC" ]; then DESC="CI 自动发布 ${VERSION}"; fi
+
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes "## 发布内容
+
+          - 版本号: \`${VERSION}\`
+          - 触发方式: ${TRIGGER}
+          - 版本描述: ${DESC}
+          - 提交信息: ${COMMIT_MSG}
+          - 提交哈希: \`${{ github.sha }}\`
+
+          > 已自动上传至微信小程序后台，请前往微信公众平台提交审核。" \
+            --latest

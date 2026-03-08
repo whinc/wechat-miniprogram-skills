@@ -1,0 +1,37 @@
+{
+  "eval_id": 4,
+  "eval_name": "pnpm-picocolors-troubleshoot",
+  "prompt": "我的项目使用 pnpm 作为包管理器，基于 Taro 框架开发微信小程序，编译产物在 dist/ 目录。现在要给项目配置 miniprogram-ci 实现自动上传，但我之前在本地执行 miniprogram-ci 时遇到了 `Cannot find module 'picocolors'` 的报错。请帮我排查并生成完整的上传脚本。",
+  "assertions": [
+    {
+      "id": "pnpm-root-cause",
+      "text": "识别出 pnpm 严格依赖隔离是 picocolors 报错的根本原因",
+      "type": "contains",
+      "check": "notes.md 中提到 pnpm 的依赖隔离/symlink 机制导致问题"
+    },
+    {
+      "id": "pnpm-shamefully-hoist",
+      "text": "建议在 .npmrc 中添加 shamefully-hoist=true",
+      "type": "contains",
+      "check": "notes.md 中包含 shamefully-hoist=true"
+    },
+    {
+      "id": "pnpm-regenerate-lockfile",
+      "text": "提醒需要重新生成 pnpm-lock.yaml",
+      "type": "contains",
+      "check": "notes.md 中提到删除/重新生成 pnpm-lock.yaml"
+    },
+    {
+      "id": "pnpm-upload-script",
+      "text": "生成了完整的上传脚本",
+      "type": "file_exists",
+      "check": "upload.js 文件存在且包含 ci.upload 调用"
+    },
+    {
+      "id": "pnpm-taro-dist-path",
+      "text": "脚本或说明中正确引用了 dist/ 作为编译产物目录",
+      "type": "contains",
+      "check": "输出中包含 dist/ 或 dist 路径"
+    }
+  ]
+}

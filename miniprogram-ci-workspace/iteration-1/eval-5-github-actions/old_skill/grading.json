@@ -1,0 +1,14 @@
+{
+  "eval_id": 5,
+  "run_type": "old_skill",
+  "expectations": [
+    { "text": "workflow 在 push 到 main 分支时触发", "passed": true, "evidence": "deploy.yml 第 16-18 行: on.push.branches: [main]" },
+    { "text": "支持 workflow_dispatch 手动触发并接受描述参数", "passed": true, "evidence": "deploy.yml 第 20-29 行: workflow_dispatch + inputs (version + desc)" },
+    { "text": "pnpm 安装步骤在 setup-node 之前", "passed": true, "evidence": "deploy.yml 第 52-55 行 Setup pnpm 在第 58 行 Setup Node.js 之前" },
+    { "text": "配置了 pnpm 缓存", "passed": true, "evidence": "deploy.yml 第 62 行: cache: 'pnpm'" },
+    { "text": "上传成功后创建 GitHub Release", "passed": true, "evidence": "deploy.yml 第 143-164 行: 使用 softprops/action-gh-release@v2" },
+    { "text": "声明了 permissions: contents: write", "passed": true, "evidence": "deploy.yml 第 36-37 行: permissions: contents: write" },
+    { "text": "密钥文件在 always() 条件下清理", "passed": true, "evidence": "deploy.yml 第 120-122 行: if: always() + rm -f private.key" },
+    { "text": "提到了网络超时处理（重试逻辑或相关说明）", "passed": true, "evidence": "upload.js 包含指数退避重试机制，notes.md 详细说明了超时处理" }
+  ]
+}

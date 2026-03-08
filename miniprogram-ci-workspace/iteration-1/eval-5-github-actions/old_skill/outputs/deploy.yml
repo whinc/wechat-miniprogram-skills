@@ -1,0 +1,164 @@
+# ============================================================================
+# 微信小程序自动上传 & Release 工作流
+# ============================================================================
+# 触发方式：
+#   1. push 到 main 分支时自动触发
+#   2. 手动触发（workflow_dispatch），可自定义版本号和描述
+#
+# 前置条件（在 GitHub 仓库 Settings > Secrets and variables > Actions 中配置）：
+#   - MP_APPID           : 小程序 AppID
+#   - MP_PRIVATE_KEY     : 上传密钥文件内容（整个 .key 文件的文本）
+# ============================================================================
+
+name: Deploy Mini Program
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（如 1.2.0，留空则自动生成）'
+        required: false
+        default: ''
+      desc:
+        description: '版本描述'
+        required: false
+        default: 'CI 自动上传'
+
+# 同一分支同时只运行一个部署，后续触发自动取消前一个
+concurrency:
+  group: deploy-miniprogram-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write  # 创建 Release 和 Tag 需要写权限
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. 检出代码 ──────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整历史，用于生成版本号和 changelog
+
+      # ── 2. 安装 pnpm ────────────────────────────────────────────────────
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # ── 3. 安装 Node.js（自动使用 pnpm 缓存）───────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+          cache-dependency-path: miniprogram-demo/pnpm-lock.yaml
+
+      # ── 4. 安装依赖 ──────────────────────────────────────────────────────
+      - name: Install dependencies
+        working-directory: miniprogram-demo
+        run: pnpm install --frozen-lockfile
+
+      # ── 5. 构建 Taro 项目 ───────────────────────────────────────────────
+      - name: Build Taro project
+        working-directory: miniprogram-demo
+        run: pnpm run build:weapp
+        env:
+          NODE_ENV: production
+
+      # ── 6. 生成版本号 ───────────────────────────────────────────────────
+      - name: Generate version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # 自动生成：日期 + 短 SHA
+            VERSION="$(date +'%Y%m%d.%H%M%S')-$(echo $GITHUB_SHA | cut -c1-7)"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "📌 版本号: $VERSION"
+
+      # ── 7. 生成版本描述 ─────────────────────────────────────────────────
+      - name: Generate description
+        id: desc
+        run: |
+          if [ -n "${{ github.event.inputs.desc }}" ] && [ "${{ github.event.inputs.desc }}" != "CI 自动上传" ]; then
+            DESC="${{ github.event.inputs.desc }}"
+          else
+            # 使用最近一次 commit message 作为描述
+            DESC="$(git log -1 --pretty=format:'%s' | head -c 200)"
+          fi
+          echo "desc=$DESC" >> "$GITHUB_OUTPUT"
+          echo "📝 版本描述: $DESC"
+
+      # ── 8. 写入上传密钥 ─────────────────────────────────────────────────
+      - name: Write private key
+        run: echo "${{ secrets.MP_PRIVATE_KEY }}" > private.key
+
+      # ── 9. 上传小程序 ───────────────────────────────────────────────────
+      - name: Upload to WeChat
+        working-directory: miniprogram-demo
+        env:
+          MP_APPID: ${{ secrets.MP_APPID }}
+          MP_PRIVATE_KEY_PATH: ${{ github.workspace }}/private.key
+          MP_PROJECT_PATH: ./dist
+          MP_ROBOT: 1
+          # miniprogram-ci 网络超时设置
+          CI_TIMEOUT: 120000
+        run: node ${{ github.workspace }}/scripts/upload.js --version "${{ steps.version.outputs.version }}" --desc "${{ steps.desc.outputs.desc }}"
+
+      # ── 10. 清理密钥 ────────────────────────────────────────────────────
+      - name: Cleanup private key
+        if: always()
+        run: rm -f private.key
+
+      # ── 11. 创建 GitHub Release ─────────────────────────────────────────
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # 获取上一个 tag 到当前的 commit log
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log "${LAST_TAG}..HEAD" --pretty=format:"- %s (%h)" --no-merges | head -50)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          fi
+
+          # 写入多行内容到 GITHUB_OUTPUT
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: 🚀 v${{ steps.version.outputs.version }}
+          body: |
+            ## 微信小程序 v${{ steps.version.outputs.version }}
+
+            **版本描述：** ${{ steps.desc.outputs.desc }}
+            **上传时间：** ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
+            **触发方式：** ${{ github.event_name == 'workflow_dispatch' && '手动触发' || '自动触发（push to main）' }}
+            **提交：** ${{ github.sha }}
+
+            ### 变更记录
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+            > 由 GitHub Actions 自动发布 | Robot #1
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
