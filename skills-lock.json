@@ -1,10 +1,15 @@
 {
   "version": 1,
   "skills": {
+    "commit-work": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "computedHash": "88cec816d028de357ae7ede3ace36a2bc235a225e3e7d2bb18cdb5190ab6c482"
+    },
     "miniprogram-automation": {
       "source": "/Users/whincwu/WeChatProjects/wechat-miniprogram-skills",
       "sourceType": "local",
-      "computedHash": "c47c0301ee8cca103a6f8387c08e6ee0e50a3b6cedf657f757be0c68d28a0e92"
+      "computedHash": "be210dea35a7b3c3e9088487a7dbb9daf884f3ac02e298e757d0460b245821d7"
     },
     "miniprogram-ci": {
       "source": "/Users/whincwu/WeChatProjects/wechat-miniprogram-skills",

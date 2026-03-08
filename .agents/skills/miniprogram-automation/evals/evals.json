@@ -4,12 +4,29 @@
     {
       "id": 1,
       "prompt": "我要用 miniprogram-automator 对官方 demo（/Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo/miniprogram 目录）做自动化测试。首先 reLaunch 到首页 page/component/index，等待页面稳定后，读取页面的导航栏标题（通常是 .title 或相似选择器），并截图保存到 outputs 目录。请先说明前置检查，再给完整脚本。",
-      "expected_output": "给出可直接运行的脚本，明确提醒 projectPath 应指向 /Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo/miniprogram（开发者工具实际打开的目录），并包含安全设置、等待策略、截图、关闭流程。",
+      "expected_output": "给出可直接运行的脚本，明确提醒 projectPath 应指向开发者工具实际打开的目录（不能仅写死 /miniprogram 子目录），包含安全设置、首页固定等待兜底（waitFor(2000)）、截图、关闭流程。",
       "files": [],
-      "expectations": [
-        "答案明确提醒开启微信开发者工具的 CLI/HTTP 调用或服务端口安全设置。",
-        "答案给出独立 Node.js 脚本，并包含 automator.launch、miniProgram.reLaunch、page.waitFor、miniProgram.screenshot 和关闭流程。",
-        "答案把 projectPath 解释为开发者工具实际打开的目录，明确指向 /Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo/miniprogram。"
+      "assertions": [
+        {
+          "id": "safety-port-reminder",
+          "description": "提醒开启微信开发者工具的服务端口安全设置（CLI/HTTP 调用）"
+        },
+        {
+          "id": "complete-standalone-script",
+          "description": "给出独立 Node.js 脚本，包含 automator.launch、miniProgram.reLaunch、page.waitFor、miniProgram.screenshot 和关闭流程"
+        },
+        {
+          "id": "projectpath-explanation",
+          "description": "说明 projectPath 是开发者工具实际打开的目录，不要机械地写死到 /miniprogram 子目录；实际用于 launch 的 projectPath 指向包含 project.config.json 的目录（项目根目录）"
+        },
+        {
+          "id": "homepage-fixed-wait",
+          "description": "首页等复杂页面使用固定等待（waitFor(2000) 或类似值）兜底，而不是只依赖选择器等待"
+        },
+        {
+          "id": "finally-cleanup",
+          "description": "包含 finally 块或同等机制确保关闭 miniProgram 实例"
+        }
       ]
     },
     {
@@ -17,21 +34,51 @@
       "prompt": "官方 demo 的 packageComponent 子包中有表单相关页面（例如 packageComponent/pages/form/input/input）。我要写一个自动化脚本：导航到输入框页面，定位 input 组件，输入测试文本，读取 value 验证是否正确。请同时说明：如果 input 在自定义组件内，为什么不能用 page.$('custom-comp input') 直接穿透，应该怎么正确定位。",
       "expected_output": "给出脚本模板和详细解释，明确区分 page.$ 的作用域限制、自定义组件边界、以及如何正确用 element.$ 分两步定位。",
       "files": [],
-      "expectations": [
-        "答案明确说明 page.$ 或 page.$$ 不能直接穿透自定义组件边界。",
-        "答案给出先 page.$('组件名') 再 element.$('selector') 的两段式定位示例。",
-        "答案区分读取原生输入框 value() 或 property('value') 与读取自定义组件实例 data() 的适用场景。"
+      "assertions": [
+        {
+          "id": "explain-component-boundary",
+          "description": "明确说明 page.$ 或 page.$$ 不能直接穿透自定义组件边界，后代选择器（如 form-panel input）也不行"
+        },
+        {
+          "id": "two-step-selector",
+          "description": "给出先 page.$('组件名') 再 element.$('selector') 的两段式定位示例，而不是直接用 page.$('form-panel input')"
+        },
+        {
+          "id": "value-vs-data-distinction",
+          "description": "区分读取原生输入框 value() / property('value') 与读取自定义组件实例 data() 的适用场景，说明 data() 适合组件实例状态而非原生输入框"
+        },
+        {
+          "id": "input-interaction",
+          "description": "脚本包含 input.tap() 和 input.input() 进行输入操作，以及输入后的 value 验证"
+        }
       ]
     },
     {
       "id": 3,
       "prompt": "官方 demo 的 packageAPI/pages/network/request/request 页面会做网络请求。我要写一个回归脚本：mock wx.request 返回固定数据，监听 console 和 exception，跳到请求页面验证渲染结果，结束前恢复 mock 并关闭小程序。请给完整脚本骨架和清理流程。",
-      "expected_output": "给出独立脚本骨架（非 Jest），明确使用 miniProgram.mockWxMethod/restoreWxMethod，包含事件监听、finally 清理流程。",
+      "expected_output": "给出独立脚本骨架（非 Jest），明确使用 miniProgram.mockWxMethod/restoreWxMethod，包含事件监听、finally 清理流程，以及基于页面实际行为（loading 状态、console log）的断言，不凭空假设列表渲染。",
       "files": [],
-      "expectations": [
-        "答案给出独立脚本骨架，而不是默认切换成 Jest 用例。",
-        "答案优先使用 miniProgram.mockWxMethod('request', ...) 与 miniProgram.restoreWxMethod('request')。",
-        "答案包含 console 与 exception 监听，以及 finally 中的恢复和关闭清理流程。"
+      "assertions": [
+        {
+          "id": "standalone-not-jest",
+          "description": "给出独立脚本骨架，而不是默认切换成 Jest 用例"
+        },
+        {
+          "id": "use-mockwxmethod",
+          "description": "优先使用 miniProgram.mockWxMethod('request', ...) 与 miniProgram.restoreWxMethod('request')，而非 evaluate() 方式注入"
+        },
+        {
+          "id": "console-exception-listener",
+          "description": "包含 miniProgram.on('console', ...) 和 miniProgram.on('exception', ...) 监听"
+        },
+        {
+          "id": "finally-restore-and-close",
+          "description": "在 finally 块中同时做 restoreWxMethod 和 miniProgram.close()，顺序正确"
+        },
+        {
+          "id": "realistic-assertion",
+          "description": "断言基于页面实际反馈（如 loading 状态变化、console log 包含请求成功信息），不凭空假设页面会渲染出列表等元素"
+        }
       ]
     }
   ]
