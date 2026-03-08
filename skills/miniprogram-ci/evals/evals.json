@@ -18,6 +18,18 @@
       "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`）。现在需要生成一个可直接落地的 Node.js 上传脚本模板：必须使用 miniprogram-ci；version 和 desc 从命令行传入；appid、privateKeyPath、projectPath、robot 从环境变量读取；支持在上传前按需执行 packNpm；把上传结果落盘到 ci-artifacts/uploads/ 目录；先列出前置条件和安全注意事项，再给完整脚本，并补充 package.json scripts 示例。",
       "expected_output": "给出面向上传场景的独立脚本模板，覆盖命令行参数解析、环境变量读取、packNpm 可选执行、upload 调用、结果落盘与 package.json script 建议，同时明确私钥和 IP 白名单等安全约束。",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "我的项目使用 pnpm 作为包管理器，基于 Taro 框架开发微信小程序，编译产物在 dist/ 目录。现在要给项目配置 miniprogram-ci 实现自动上传，但我之前在本地执行 miniprogram-ci 时遇到了 `Cannot find module 'picocolors'` 的报错。请帮我排查并生成完整的上传脚本。",
+      "expected_output": "识别出 pnpm 严格依赖隔离导致 miniprogram-ci 内部依赖缺失的问题，建议在 .npmrc 中添加 shamefully-hoist=true 并重新生成 lockfile；然后生成完整的上传脚本模板，包含环境变量配置、命令行参数、超时重试逻辑。",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`），我需要一个完整的 GitHub Actions workflow 来自动化小程序的上传流程。项目使用 pnpm，Taro 框架，编译产物在 dist/ 目录。要求：push 到 main 分支时自动触发；支持手动触发并自定义版本描述；上传成功后自动创建 GitHub Release；需要处理 pnpm 缓存和 miniprogram-ci 的网络超时问题。",
+      "expected_output": "生成完整的 GitHub Actions workflow YAML 文件，包含 pnpm 安装（先于 setup-node）、依赖缓存、构建、版本号生成、密钥写入与清理、上传脚本调用、GitHub Release 创建，以及 permissions: contents: write 声明。同时提供 GitHub Secrets 配置说明和注意事项。",
+      "files": []
     }
   ]
 }

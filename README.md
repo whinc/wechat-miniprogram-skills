@@ -1,6 +1,6 @@
 # wechat-miniprogram-skills
 
-这是一个面向微信小程序开发的技能仓库，适用于 [CodeBuddy Code](https://cnb.cool/codebuddy/codebuddy-code) / Claude Code。
+这是一个面向微信小程序开发的技能仓库，适用于 [CodeBuddy Code](https://www.codebuddy.ai/docs/zh/cli/overview) / Claude Code。
 
 ## Skills
 
@@ -27,11 +27,12 @@
 
 **能力说明：**
 - 检查前置条件（`miniprogram-ci`、`project.config.json`、私钥、IP 白名单）
-- 生成可重复执行的 Node.js 脚本，而不是直接代替用户执行部署动作
-- 根据用户项目环境生成 `scripts/pack-npm.js`、`scripts/preview.js` 和 `scripts/upload.js` 模板
-- 补充 `package.json` scripts 与 CI/CD 使用示例
-- 强调 secrets 管理、`.gitignore` 规则以及可重复执行的流水线用法
-- 基于官方 `miniprogram-demo` 项目对 `pack-npm`、预览和上传场景进行过评估
+- 生成可重复执行的 Node.js 脚本（`scripts/pack-npm.js`、`scripts/preview.js`、`scripts/upload.js`）
+- 上传脚本内置超时重试机制，应对 CI 环境跨境网络不稳定
+- 提供 GitHub Actions 完整模板（npm/pnpm 双版本），含自动构建、上传微信后台、创建 Release
+- 覆盖 pnpm 项目的 `shamefully-hoist` 兼容性配置
+- 强调 secrets 管理、`.gitignore` 规则以及 `permissions: contents: write` 等常见踩坑点
+- 基于实际项目（Taro + pnpm）和官方 `miniprogram-demo` 验证
 
 ## 安装方式
 

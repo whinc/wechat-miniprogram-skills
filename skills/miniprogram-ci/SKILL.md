@@ -1,6 +1,6 @@
 ---
 name: miniprogram-ci
-description: Use when the user wants to automate WeChat mini-program upload or preview via CI/CD, generate deployment scripts, set up miniprogram-ci workflows, or create preview QR codes automatically. Trigger whenever the user mentions "上传小程序", "预览", "CI 部署", "miniprogram-ci", "自动化上传", "发布小程序版本", "生成预览二维码", or asks to integrate WeChat mini-program with continuous integration pipelines.
+description: Use when the user wants to automate WeChat mini-program upload, preview, or npm packaging via CI/CD, generate deployment scripts, set up miniprogram-ci workflows, or create preview QR codes automatically. Trigger whenever the user mentions "上传小程序", "预览", "CI 部署", "miniprogram-ci", "自动化上传", "发布小程序版本", "生成预览二维码", "打包npm", "pack-npm", "构建npm依赖", "GitHub Actions 小程序", "pnpm 小程序部署", or asks to integrate WeChat mini-program with continuous integration pipelines (GitHub Actions, GitLab CI, etc.).
 ---
 
 # 微信小程序 CI 自动化
@@ -325,7 +325,7 @@ async function main() {
 main();
 ```
 
-### 3.2 上传脚本模板
+### 3.3 上传脚本模板
 
 若用户需要**上传**能力，创建 `scripts/upload.js`：
 
@@ -429,6 +429,50 @@ function timestamp() {
   return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 上传（含超时重试）
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 5000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * 上传并在超时时自动重试
+ * 微信上传服务器在 GitHub Actions 等 CI 环境下可能因跨境网络超时，
+ * err.message 可为 "timeout"、"undefined" 或空字符串。
+ */
+async function uploadWithRetry(project, args) {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`\n🔄 第 ${attempt} 次重试上传...`);
+        await sleep(RETRY_DELAY_MS);
+      }
+      return await ci.upload({
+        project,
+        version: args.version,
+        desc: args.desc,
+        robot: CONFIG.robot,
+        setting: { es6: true, es7: true, minify: true, autoPrefixWXSS: true },
+        onProgressUpdate: (info) => { if (typeof info === 'string') console.log(`   ${info}`); },
+      });
+    } catch (err) {
+      const errMsg = err.message || String(err);
+      // 超时的 err.message 可能是 "timeout"、"undefined" 或空字符串
+      const isTimeout = errMsg === 'timeout' || errMsg === 'undefined' || !errMsg;
+      if (isTimeout && attempt < MAX_RETRIES) {
+        console.warn(`\n⚠️  上传超时（第 ${attempt}/${MAX_RETRIES} 次），${RETRY_DELAY_MS / 1000}s 后重试...`);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 function saveResult(result, args) {
   ensureDir(CONFIG.outputDir);
   const filename = `upload-${args.version}-${timestamp()}.json`;
@@ -486,14 +530,7 @@ async function main() {
 
   console.log('\n🚀 上传代码...');
   try {
-    const result = await ci.upload({
-      project,
-      version: args.version,
-      desc: args.desc,
-      robot: CONFIG.robot,
-      setting: { es6: true, es7: true, minify: true, autoPrefixWXSS: true },
-      onProgressUpdate: console.log,
-    });
+    const result = await uploadWithRetry(project, args);
 
     console.log('\n✅ 上传成功！');
     if (result?.subPackageInfo) {
@@ -548,24 +585,33 @@ MP_ROBOT=1
 
 ### CI/CD 配置（GitHub Actions 示例）
 
+以下提供两个版本，按包管理器选用：
+
+#### npm / yarn 项目（简洁版）
+
 ```yaml
 name: Deploy Mini Program
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   upload:
     runs-on: ubuntu-latest
+    # ⚠️ 创建 GitHub Release 必须声明，否则报 HTTP 403
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm ci
@@ -573,8 +619,94 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Generate version
+        id: version
+        run: echo "version=$(date +%Y%m%d).$(git rev-parse HEAD | cut -c1-6)" >> "$GITHUB_OUTPUT"
+
       - name: Write private key
-        run: echo "${{ secrets.MP_PRIVATE_KEY }}" > private.key
+        run: |
+          echo "${{ secrets.MP_PRIVATE_KEY }}" > private.key
+          chmod 600 private.key
+
+      - name: Upload to WeChat
+        env:
+          MP_APPID: ${{ secrets.MP_APPID }}
+          MP_PRIVATE_KEY_PATH: ./private.key
+          MP_PROJECT_PATH: ./dist
+          MP_ROBOT: 1
+        run: npm run ci:upload -- --version "${{ steps.version.outputs.version }}" --desc "CI 自动上传"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f private.key
+```
+
+#### pnpm 项目（完整版，含重试与 Release）
+
+> 此模板经过实际项目（pnpm + Taro）验证，包含所有坑的解决方案。
+
+```yaml
+name: WeChat Mini Program CI
+
+on:
+  push:
+    branches:
+      - main
+  # 支持手动触发并自定义描述
+  workflow_dispatch:
+    inputs:
+      desc:
+        description: '版本描述（留空则自动生成）'
+        required: false
+        default: ''
+
+jobs:
+  deploy:
+    name: 测试 → 构建 → 上传微信后台
+    runs-on: ubuntu-latest
+    # ⚠️ 必须声明，否则创建 GitHub Release 会报 HTTP 403
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ⚠️ pnpm 必须先于 setup-node 安装，否则 cache: 'pnpm' 会报错
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # ⚠️ 需要先提交 pnpm-lock.yaml，否则 --frozen-lockfile 会失败
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Generate version
+        id: version
+        run: |
+          DATE=$(date +%Y%m%d)
+          COMMIT=$(git rev-parse HEAD | cut -c1-6)
+          VERSION="${DATE}.${COMMIT}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Generated version: ${VERSION}"
+
+      - name: Build mini program
+        run: pnpm build:weapp
+
+      - name: Write private key
+        run: |
+          echo "${{ secrets.MP_PRIVATE_KEY }}" > private.key
+          chmod 600 private.key
 
       - name: Upload to WeChat
         env:
@@ -583,13 +715,40 @@ jobs:
           MP_PROJECT_PATH: ./dist
           MP_ROBOT: 1
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          npm run ci:upload -- --version "$VERSION" --desc "CI 自动上传"
+          VERSION="${{ steps.version.outputs.version }}"
+          DESC="${{ github.event.inputs.desc }}"
+          if [ -z "$DESC" ]; then DESC="CI 自动发布 ${VERSION}"; fi
+          pnpm ci:upload -- --version "$VERSION" --desc "$DESC"
 
-      - name: Cleanup
+      - name: Cleanup private key
         if: always()
         run: rm -f private.key
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --notes "## 发布内容
+
+          - 版本号: \`${VERSION}\`
+          - 提交信息: ${COMMIT_MSG}
+          - 提交哈希: \`${{ github.sha }}\`
+
+          > 已自动上传至微信小程序后台，请前往微信公众平台提交审核。" \
+            --latest
 ```
+
+**GitHub Secrets 配置：**
+
+| Secret 名称 | 值 | 说明 |
+|---|---|---|
+| `MP_PRIVATE_KEY` | 密钥文件完整内容 | `cat private.wxXXXX.key` 的输出 |
+| `MP_APPID` | `wxXXXXXXXXXXXXXXXX` | 小程序 AppID |
 
 ---
 
@@ -602,6 +761,30 @@ jobs:
 | `project.config.json not found` | 项目路径错误 | 确认 `MP_PROJECT_PATH` 指向编译产物目录 |
 | `Error: getaddrinfo ENOTFOUND` | 网络问题 | 检查代理设置或网络连接 |
 | 上传后版本未出现 | robot 编号冲突 | 不同任务使用不同 robot 编号 |
+| `Cannot find module 'picocolors'`（或 `nanoid/non-secure`） | pnpm 严格依赖隔离导致 miniprogram-ci 内部依赖链断裂 | 见下方「pnpm 项目特殊配置」 |
+| 上传失败: `undefined` / `timeout` | GitHub Actions runner 到微信上传服务器跨境网络不稳定（60s 超时） | 在 `upload.js` 中加入重试逻辑，见下方模板 |
+| 创建 Release 失败: HTTP 403 | GitHub Actions 默认 `GITHUB_TOKEN` 无 `contents: write` 权限 | 在 job 中显式声明 `permissions: contents: write` |
+
+---
+
+## pnpm 项目特殊配置
+
+pnpm 默认启用严格的依赖隔离（symlink node_modules），会导致 `miniprogram-ci` 内部依赖（如 `picocolors`、`nanoid/non-secure`、`cssnano`）无法被正确解析，即使它们已被间接安装。
+
+**解决方案：** 在项目根目录创建（或修改）`.npmrc`，添加：
+
+```ini
+shamefully-hoist=true
+```
+
+然后**必须重新生成 lockfile** 才能生效（仅修改 `.npmrc` 不够）：
+
+```bash
+rm pnpm-lock.yaml
+CI=true pnpm install
+```
+
+> **注意**：此配置会提升所有包到根 `node_modules`，行为类似 npm/yarn。若担心影响其他依赖，可使用更精细的 `public-hoist-pattern[]` 配置，但实践中对 miniprogram-ci 需要大量条目，不如直接使用 `shamefully-hoist=true`。
 
 ---
 
@@ -633,6 +816,9 @@ jobs:
 在交付脚本前，提醒用户确认：
 
 - [ ] `*.key` 和 `.env` 已添加到 `.gitignore`
-- [ ] 生产环境已开启 IP 白名单
+- [ ] 生产环境已开启 IP 白名单（或 CI 使用固定出口 IP 的 self-hosted runner）
 - [ ] CI/CD 中密钥通过 secrets 管理，而非明文
 - [ ] `ci-artifacts/` 目录已添加到 `.gitignore`（如包含敏感日志）
+- [ ] pnpm 项目：`.npmrc` 已添加 `shamefully-hoist=true` 并重新生成 lockfile（解决 miniprogram-ci 内部依赖缺失）
+- [ ] GitHub Actions workflow 已声明 `permissions: contents: write`（如需创建 Release）
+- [ ] `upload.js` 包含超时重试逻辑（应对跨境网络不稳定，超时 err.message 可能为 `"timeout"`、`"undefined"` 或空字符串）
