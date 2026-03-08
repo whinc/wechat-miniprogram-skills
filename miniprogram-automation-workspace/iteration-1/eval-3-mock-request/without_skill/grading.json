@@ -1,0 +1,34 @@
+{
+  "eval_id": 3,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "standalone-not-jest: 给出独立脚本骨架，而不是默认切换成 Jest 用例",
+      "passed": true,
+      "evidence": "脚本以独立 Node.js 文件形式呈现，使用 runRegressionTest() 函数直接调用，无 Jest 测试框架结构"
+    },
+    {
+      "text": "use-mockwxmethod: 优先使用 miniProgram.mockWxMethod('request', ...) 与 miniProgram.restoreWxMethod('request')，而非 evaluate() 方式注入",
+      "passed": true,
+      "evidence": "第19-41行使用了 miniProgram.mockWxMethod('request', ...) 注入 mock，cleanup 函数（第91行）使用了 miniProgram.restoreWxMethod('request') 恢复，未使用 evaluate() 方式"
+    },
+    {
+      "text": "console-exception-listener: 包含 miniProgram.on('console', ...) 和 miniProgram.on('exception', ...) 监听",
+      "passed": false,
+      "evidence": "脚本第44-49行注册了 miniProgram.on('console', ...) 监听，但没有注册 miniProgram.on('exception', ...) 监听；第48行注册的是 miniProgram.on('error', ...) 而非要求的 'exception' 事件，两者是不同的事件名称，不满足断言要求"
+    },
+    {
+      "text": "finally-restore-and-close: 在 finally 块中同时做 restoreWxMethod 和 miniProgram.close()",
+      "passed": true,
+      "evidence": "cleanup 函数在 finally 块（第80-83行）中被调用，cleanup 函数内（第89-103行）依次做了 restoreWxMethod('request') 和 miniProgram.close()，两者均有独立 try/catch 保护"
+    },
+    {
+      "text": "realistic-assertion: 断言基于页面实际反馈（如 loading 状态变化、console log），不凭空假设页面会渲染出列表等元素",
+      "passed": false,
+      "evidence": "第66-73行的断言使用了 page.$('.response-data') 选择器并检查文本是否包含 'mocked' 或 'Item'，这是凭空假设页面会渲染出包含 mock 数据的 .response-data 元素，而非基于 loading 状态变化或 console 日志等实际反馈"
+    }
+  ],
+  "pass_count": 3,
+  "total_count": 5,
+  "pass_rate": 0.6
+}

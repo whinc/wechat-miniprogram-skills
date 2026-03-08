@@ -1,0 +1,34 @@
+{
+  "eval_id": 1,
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "safety-port-reminder: 提醒开启微信开发者工具的服务端口安全设置（CLI/HTTP 调用）",
+      "passed": true,
+      "evidence": "第29-33行明确说明：'打开开发者工具 → 设置 → 安全设置 → 开启「服务端口」'，并说明缺少该步骤会导致 launch 失败、连接超时、WebSocket 建不起来等问题。"
+    },
+    {
+      "text": "complete-standalone-script: 给出独立 Node.js 脚本，包含 automator.launch、miniProgram.reLaunch、page.waitFor、miniProgram.screenshot 和关闭流程",
+      "passed": true,
+      "evidence": "脚本包含所有要求元素：automator.launch（第96行）、miniProgram.reLaunch（第103行）、page.waitFor(2000)（第106行）、miniProgram.screenshot（第136行），以及在 finally 块中的 miniProgram.close()（第141行）。"
+    },
+    {
+      "text": "projectpath-explanation: 说明 projectPath 是开发者工具实际打开的目录，且正确理解该 demo 项目应指向 miniprogram-demo 根目录（含 project.config.json 的目录），而不是 miniprogram 子目录",
+      "passed": true,
+      "evidence": "第22-27行明确说明：'本项目的 project.config.json 位于 miniprogram-demo/ 根目录...因此开发者工具实际打开的目录是 miniprogram-demo/（包含 project.config.json 的那一层），不是 miniprogram-demo/miniprogram/'。脚本中 projectPath 使用 path.resolve(__dirname, '..') 指向 miniprogram-demo 根目录，注释也写明'projectPath 是包含 project.config.json 的目录，不是 miniprogram/ 子目录'。"
+    },
+    {
+      "text": "homepage-fixed-wait: 首页等复杂页面使用固定等待（waitFor(2000) 或类似的足够大的值）兜底，而不是只依赖选择器等待",
+      "passed": true,
+      "evidence": "脚本第106行使用 page.waitFor(2000) 固定等待，文档第55行和第185行均说明'首页是复杂列表页，不适合用选择器等待...用 waitFor(2000) 固定等待更可靠'。等待值 2000ms 满足'足够大的值'要求。"
+    },
+    {
+      "text": "finally-cleanup: 包含 finally 块或同等机制确保关闭 miniProgram 实例",
+      "passed": true,
+      "evidence": "脚本第139-143行包含 finally 块，其中执行 miniProgram.close().catch(() => {}) 确保即使出错也能关闭实例，处理了异常情况（catch 空函数防止 finally 抛出）。"
+    }
+  ],
+  "pass_count": 5,
+  "total_count": 5,
+  "pass_rate": 1.0
+}

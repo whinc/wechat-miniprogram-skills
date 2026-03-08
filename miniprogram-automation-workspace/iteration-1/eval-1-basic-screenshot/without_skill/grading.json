@@ -1,0 +1,34 @@
+{
+  "eval_id": 1,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "safety-port-reminder: 提醒开启微信开发者工具的服务端口安全设置（CLI/HTTP 调用）",
+      "passed": true,
+      "evidence": "前置检查第1节中提到：'微信开发者工具：已安装并开启「服务端口」（设置 → 安全设置 → 开启服务端口）'，满足该断言要求。"
+    },
+    {
+      "text": "complete-standalone-script: 给出独立 Node.js 脚本，包含 automator.launch、miniProgram.reLaunch、page.waitFor、miniProgram.screenshot 和关闭流程",
+      "passed": false,
+      "evidence": "脚本包含 automator.launch（第48行）、miniProgram.reLaunch（第57行）、miniProgram.screenshot（第116行）和关闭流程（第125行），但等待调用使用的是 miniProgram.waitFor(1000)（第61行），而非 page.waitFor()。reLaunch 后也没有将返回值赋给 page 对象就直接调用 miniProgram.waitFor，这与 miniprogram-automator 的正确 API 用法不符（page.waitFor 才是页面级等待）。"
+    },
+    {
+      "text": "projectpath-explanation: 说明 projectPath 是开发者工具实际打开的目录，且正确理解该 demo 项目应指向 miniprogram-demo 根目录（含 project.config.json 的目录），而不是 miniprogram 子目录",
+      "passed": false,
+      "evidence": "第19-22行的项目路径确认写道：'小程序项目根目录：/Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo/miniprogram'，并说明'该目录下需包含 app.json、app.js 等文件'。这是错误的，projectPath 应指向包含 project.config.json 的 miniprogram-demo/ 目录，而非 miniprogram/ 子目录。脚本第49行的 projectPath 也使用了错误路径 miniprogram-demo/miniprogram。"
+    },
+    {
+      "text": "homepage-fixed-wait: 首页等复杂页面使用固定等待（waitFor(2000) 或类似的足够大的值）兜底，而不是只依赖选择器等待",
+      "passed": false,
+      "evidence": "脚本第61行使用 miniProgram.waitFor(1000)，等待时长仅 1000ms，且方法调用对象是 miniProgram 而非 page。注意事项第2条说明'如页面加载较慢可适当增加'，说明作者并未认为 1000ms 足够；对于复杂首页，1000ms 不够充裕，且未明确说明这是'固定等待兜底'策略。"
+    },
+    {
+      "text": "finally-cleanup: 包含 finally 块或同等机制确保关闭 miniProgram 实例",
+      "passed": true,
+      "evidence": "脚本第123-129行包含 finally 块，其中检查 miniProgram 是否存在并调用 miniProgram.close()，确保关闭连接。"
+    }
+  ],
+  "pass_count": 2,
+  "total_count": 5,
+  "pass_rate": 0.4
+}

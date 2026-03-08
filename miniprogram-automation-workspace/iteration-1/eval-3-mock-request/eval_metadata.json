@@ -1,0 +1,6 @@
+{
+  "eval_id": 3,
+  "eval_name": "mock-request",
+  "prompt": "官方 demo 的 packageAPI/pages/network/request/request 页面会做网络请求。我要写一个回归脚本：mock wx.request 返回固定数据，监听 console 和 exception，跳到请求页面验证渲染结果，结束前恢复 mock 并关闭小程序。请给完整脚本骨架和清理流程。",
+  "assertions": []
+}

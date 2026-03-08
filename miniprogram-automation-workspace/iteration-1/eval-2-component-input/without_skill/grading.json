@@ -1,0 +1,29 @@
+{
+  "eval_id": 2,
+  "config": "without_skill",
+  "expectations": [
+    {
+      "text": "explain-component-boundary: 明确说明 page.$ 或 page.$$ 不能直接穿透自定义组件边界，后代选择器（如 form-panel input）也不行",
+      "passed": true,
+      "evidence": "第57-67行明确说明了 page.$('custom-comp input') 无法穿透 Shadow DOM 边界，并解释了原因：'Shadow DOM 边界会阻止选择器穿透'，给出了错误写法示例并注明'会返回 null 或抛出未找到元素的错误'"
+    },
+    {
+      "text": "two-step-selector: 给出先 page.$('组件名') 再 element.$('selector') 的两段式定位示例",
+      "passed": true,
+      "evidence": "第73-81行的'方式一'给出了完整两段式示例：先 page.$('custom-comp') 获取组件，再 customComp.$('input') 在组件内部查找；另有'方式二'展示了 page.$$() 配合索引的写法"
+    },
+    {
+      "text": "value-vs-data-distinction: 区分读取原生输入框 value() / property('value') 与读取自定义组件实例 data() 的适用场景",
+      "passed": false,
+      "evidence": "without_skill 版本没有提到 data() 方法，也没有区分 value()/property('value') 与 data() 的使用场景。脚本中使用的是 properties() 方法读取 value（非标准的 value() 方法），并未涉及 data() 的适用场景说明"
+    },
+    {
+      "text": "input-interaction: 脚本包含 input.tap() 和 input.input() 进行输入操作，以及输入后的 value 验证",
+      "passed": false,
+      "evidence": "脚本（第26-43行）包含 inputElement.input() 和 value 验证，但缺少 input.tap() 操作；使用了 properties().value 而非标准 value() 方法读取值。tap() 步骤的缺失是主要不足"
+    }
+  ],
+  "pass_count": 2,
+  "total_count": 4,
+  "pass_rate": 0.5
+}

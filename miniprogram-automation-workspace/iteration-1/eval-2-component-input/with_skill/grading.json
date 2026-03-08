@@ -1,0 +1,29 @@
+{
+  "eval_id": 2,
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "explain-component-boundary: 明确说明 page.$ 或 page.$$ 不能直接穿透自定义组件边界，后代选择器（如 form-panel input）也不行",
+      "passed": true,
+      "evidence": "第116-124行明确指出：'page.$() / page.$$() 的查询作用域是页面根节点'，并说明'即使你写的是后代选择器 custom-comp input，这个查询也无法穿透自定义组件边界'，代码示例注释也写明'这行代码会返回 null，即使页面上存在 input'"
+    },
+    {
+      "text": "two-step-selector: 给出先 page.$('组件名') 再 element.$('selector') 的两段式定位示例",
+      "passed": true,
+      "evidence": "第136-148行给出了完整的两段式示例：先 page.$('custom-comp') 获取组件宿主，再 comp.$('input') 在组件作用域内查找，注释明确标注了'第一步'和'第二步'"
+    },
+    {
+      "text": "value-vs-data-distinction: 区分读取原生输入框 value() / property('value') 与读取自定义组件实例 data() 的适用场景",
+      "passed": true,
+      "evidence": "第162-169行的表格明确区分了两种场景：原生 input/textarea 用 value() 或 property('value')，自定义组件内部数据状态用 data()，并注明'不要混用'"
+    },
+    {
+      "text": "input-interaction: 脚本包含 input.tap() 和 input.input() 进行输入操作，以及输入后的 value 验证",
+      "passed": true,
+      "evidence": "第66-76行的代码包含 input.tap()、input.input(TEST_TEXT)，以及 input.value() 读取值后与 TEST_TEXT 进行严格等值比较验证"
+    }
+  ],
+  "pass_count": 4,
+  "total_count": 4,
+  "pass_rate": 1.0
+}

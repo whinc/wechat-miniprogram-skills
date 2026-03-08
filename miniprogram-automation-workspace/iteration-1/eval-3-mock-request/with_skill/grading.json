@@ -1,0 +1,34 @@
+{
+  "eval_id": 3,
+  "config": "with_skill",
+  "expectations": [
+    {
+      "text": "standalone-not-jest: 给出独立脚本骨架，而不是默认切换成 Jest 用例",
+      "passed": true,
+      "evidence": "整个脚本以独立 Node.js 脚本形式呈现（regression-mock-request.js），使用 main().catch() 模式入口，无任何 Jest describe/it/test 等测试框架结构"
+    },
+    {
+      "text": "use-mockwxmethod: 优先使用 miniProgram.mockWxMethod('request', ...) 与 miniProgram.restoreWxMethod('request')，而非 evaluate() 方式注入",
+      "passed": true,
+      "evidence": "第89-119行使用了 miniProgram.mockWxMethod('request', ...) 注入 mock，第187-189行使用了 miniProgram.restoreWxMethod('request') 恢复，全程未使用 evaluate() 方式"
+    },
+    {
+      "text": "console-exception-listener: 包含 miniProgram.on('console', ...) 和 miniProgram.on('exception', ...) 监听",
+      "passed": true,
+      "evidence": "第77-85行同时注册了 miniProgram.on('console', ...) 和 miniProgram.on('exception', ...) 两个监听器，并将事件分别收集到 consoleEvents 和 exceptionEvents 数组"
+    },
+    {
+      "text": "finally-restore-and-close: 在 finally 块中同时做 restoreWxMethod 和 miniProgram.close()",
+      "passed": true,
+      "evidence": "第183-196行的 finally 块中依次调用了 restoreWxMethod('request') 和 miniProgram.close()，两者均用 .catch() 包裹防止异常掩盖"
+    },
+    {
+      "text": "realistic-assertion: 断言基于页面实际反馈（如 loading 状态变化、console log），不凭空假设页面会渲染出列表等元素",
+      "passed": true,
+      "evidence": "第143-174行的断言围绕 pageData.loading === false 和 consoleEvents 中的日志内容，脚本头部注释（第13行）也明确说明'不一定会渲染列表，断言应围绕 loading 状态、日志内容或页面 data() 来设计，不要凭空假设会出现列表元素'"
+    }
+  ],
+  "pass_count": 5,
+  "total_count": 5,
+  "pass_rate": 1.0
+}

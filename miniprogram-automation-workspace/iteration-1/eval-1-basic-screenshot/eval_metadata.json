@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "eval_name": "basic-screenshot",
+  "prompt": "我要用 miniprogram-automator 对官方 demo（/Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo/miniprogram 目录）做自动化测试。首先 reLaunch 到首页 page/component/index，等待页面稳定后，读取页面的导航栏标题（通常是 .title 或相似选择器），并截图保存到 outputs 目录。请先说明前置检查，再给完整脚本。",
+  "assertions": [
+    {
+      "id": "safety-port-reminder",
+      "description": "提醒开启微信开发者工具的服务端口安全设置（CLI/HTTP 调用）"
+    },
+    {
+      "id": "complete-standalone-script",
+      "description": "给出独立 Node.js 脚本，包含 automator.launch、miniProgram.reLaunch、page.waitFor、miniProgram.screenshot 和关闭流程"
+    },
+    {
+      "id": "projectpath-explanation",
+      "description": "说明 projectPath 是开发者工具实际打开的目录，不要机械地写死到 /miniprogram 子目录；实际用于 launch 的 projectPath 指向包含 project.config.json 的目录（项目根目录）"
+    },
+    {
+      "id": "homepage-fixed-wait",
+      "description": "首页等复杂页面使用固定等待（waitFor(2000) 或类似值）兜底，而不是只依赖选择器等待"
+    },
+    {
+      "id": "finally-cleanup",
+      "description": "包含 finally 块或同等机制确保关闭 miniProgram 实例"
+    }
+  ]
+}

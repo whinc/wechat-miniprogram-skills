@@ -1,0 +1,6 @@
+{
+  "eval_id": 2,
+  "eval_name": "component-input",
+  "prompt": "官方 demo 的 packageComponent 子包中有表单相关页面（例如 packageComponent/pages/form/input/input）。我要写一个自动化脚本：导航到输入框页面，定位 input 组件，输入测试文本，读取 value 验证是否正确。请同时说明：如果 input 在自定义组件内，为什么不能用 page.$('custom-comp input') 直接穿透，应该怎么正确定位。",
+  "assertions": []
+}
