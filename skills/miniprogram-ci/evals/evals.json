@@ -3,19 +3,19 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "基于 miniprogram-demo 项目，该项目位于 /Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo，project.config.json 在项目根目录，编译产物也在根目录（projectPath: 项目根目录）。现在需要生成一个可复用的打包 NPM 脚本。要求：使用 miniprogram-ci；优先输出可直接运行的 Node.js 脚本而不是零散命令；appid、projectPath 从环境变量读取；通过 ci.packNpm 构建 npm 依赖；先说明前置检查项，再给完整脚本，并说明 package.json 应该加什么 script。",
+      "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`），project.config.json 在项目根目录，编译产物也在项目根目录（projectPath 为项目根目录）。现在需要生成一个可复用的打包 NPM 脚本。要求：使用 miniprogram-ci；优先输出可直接运行的 Node.js 脚本而不是零散命令；appid、projectPath 从环境变量读取；通过 ci.packNpm 构建 npm 依赖；先说明前置检查项，再给完整脚本，并说明 package.json 应该加什么 script。",
       "expected_output": "给出面向打包 NPM 场景的独立脚本模板，覆盖环境变量读取、项目对象创建、packNpm 调用、结果输出，以及 package.json script 建议。",
       "files": []
     },
     {
       "id": 2,
-      "prompt": "基于 miniprogram-demo 项目，该项目位于 /Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo，project.config.json 在项目根目录，编译产物也在根目录。现在需要生成一个可复用的预览脚本。要求：使用 miniprogram-ci；优先输出可直接运行的 Node.js 脚本；appid、privateKeyPath、projectPath、robot 从环境变量读取；执行后生成预览二维码图片到 ci-artifacts/previews/ 目录；支持可选的 pagePath 和 searchQuery；先说明前置检查项，再给完整脚本，并说明 package.json 应该加什么 script。",
+      "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`），project.config.json 在项目根目录，编译产物也在项目根目录。现在需要生成一个可复用的预览脚本。要求：使用 miniprogram-ci；优先输出可直接运行的 Node.js 脚本；appid、privateKeyPath、projectPath、robot 从环境变量读取；执行后生成预览二维码图片到 ci-artifacts/previews/ 目录；支持可选的 pagePath 和 searchQuery；先说明前置检查项，再给完整脚本，并说明 package.json 应该加什么 script。",
       "expected_output": "给出面向预览场景的独立脚本模板，覆盖环境变量读取、项目对象创建、preview 调用、二维码输出目录处理、可选页面参数，以及 package.json script 建议。",
       "files": []
     },
     {
       "id": 3,
-      "prompt": "基于 miniprogram-demo 项目，项目根目录为 /Users/whincwu/WeChatProjects/wechat-miniprogram-skills/miniprogram-demo。现在需要生成一个可直接落地的 Node.js 上传脚本模板：必须使用 miniprogram-ci；version 和 desc 从命令行传入；appid、privateKeyPath、projectPath、robot 从环境变量读取；支持在上传前按需执行 packNpm；把上传结果落盘到 ci-artifacts/uploads/ 目录；先列出前置条件和安全注意事项，再给完整脚本，并补充 package.json scripts 示例。",
+      "prompt": "基于仓库根目录下的 miniprogram-demo 项目（相对路径 `miniprogram-demo/`）。现在需要生成一个可直接落地的 Node.js 上传脚本模板：必须使用 miniprogram-ci；version 和 desc 从命令行传入；appid、privateKeyPath、projectPath、robot 从环境变量读取；支持在上传前按需执行 packNpm；把上传结果落盘到 ci-artifacts/uploads/ 目录；先列出前置条件和安全注意事项，再给完整脚本，并补充 package.json scripts 示例。",
       "expected_output": "给出面向上传场景的独立脚本模板，覆盖命令行参数解析、环境变量读取、packNpm 可选执行、upload 调用、结果落盘与 package.json script 建议，同时明确私钥和 IP 白名单等安全约束。",
       "files": []
     }

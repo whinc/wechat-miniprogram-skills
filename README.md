@@ -32,53 +32,21 @@ Generate reusable CI scripts for WeChat mini-program `pack-npm`, preview, and up
 
 ## Installation
 
-### Option A — Copy skill files directly
+Install these skills with the Skills CLI. See the official documentation for the latest usage details:
 
-#### miniprogram-screenshot
+<https://skills.sh/docs/cli>
 
-```bash
-# For CodeBuddy Code
-mkdir -p .codebuddy/skills/miniprogram-screenshot
-curl -o .codebuddy/skills/miniprogram-screenshot/SKILL.md \
-  https://raw.githubusercontent.com/whinc/wechat-miniprogram-skills/main/skills/miniprogram-screenshot/SKILL.md
-
-# For Claude Code
-mkdir -p .claude/skills/miniprogram-screenshot
-curl -o .claude/skills/miniprogram-screenshot/SKILL.md \
-  https://raw.githubusercontent.com/whinc/wechat-miniprogram-skills/main/skills/miniprogram-screenshot/SKILL.md
-```
-
-#### miniprogram-ci
+### Install this repository
 
 ```bash
-# For CodeBuddy Code
-mkdir -p .codebuddy/skills/miniprogram-ci
-curl -o .codebuddy/skills/miniprogram-ci/SKILL.md \
-  https://raw.githubusercontent.com/whinc/wechat-miniprogram-skills/main/skills/miniprogram-ci/SKILL.md
-
-# For Claude Code
-mkdir -p .claude/skills/miniprogram-ci
-curl -o .claude/skills/miniprogram-ci/SKILL.md \
-  https://raw.githubusercontent.com/whinc/wechat-miniprogram-skills/main/skills/miniprogram-ci/SKILL.md
+npx skills add whinc/wechat-miniprogram-skills
 ```
 
-### Option B — Clone and symlink
+This repository currently includes:
+- `miniprogram-screenshot`
+- `miniprogram-ci`
 
-```bash
-git clone https://github.com/whinc/wechat-miniprogram-skills.git
-
-# CodeBuddy Code
-ln -s $(pwd)/wechat-miniprogram-skills/skills/miniprogram-screenshot \
-      <your-project>/.codebuddy/skills/miniprogram-screenshot
-ln -s $(pwd)/wechat-miniprogram-skills/skills/miniprogram-ci \
-      <your-project>/.codebuddy/skills/miniprogram-ci
-
-# Claude Code
-ln -s $(pwd)/wechat-miniprogram-skills/skills/miniprogram-screenshot \
-      <your-project>/.claude/skills/miniprogram-screenshot
-ln -s $(pwd)/wechat-miniprogram-skills/skills/miniprogram-ci \
-      <your-project>/.claude/skills/miniprogram-ci
-```
+If the CLI usage changes, follow the official documentation above rather than the old manual copy/symlink workflow.
 
 ## Requirements
 
