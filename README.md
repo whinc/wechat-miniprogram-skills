@@ -1,6 +1,6 @@
 # wechat-miniprogram-skills
 
-这是一个面向微信小程序开发的技能仓库，适用于 [CodeBuddy Code](https://www.codebuddy.ai/docs/zh/cli/overview) / Claude Code。
+这是一个面向微信小程序开发的技能仓库，基于 [Skills](https://github.com/vercel-labs/skills) 规范，支持 Claude Code、Gemini CLI、Codex、Cursor、GitHub Copilot、Windsurf、Cline、OpenCode、CodeBuddy、Continue、Trae、Qwen Code 等 40+ 种 AI 编程代理。
 
 ## Skills
 
